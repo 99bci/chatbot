@@ -19,11 +19,11 @@ export const Chat = ({ messages, loading, onSendMessage }) => {
             <ChatLoader />
           </div>
         )}
-      </div>
 
-      <div className="mt-4 sm:mt-8 bottom-[56px] left-0 w-full">
-        {/* 채팅 입력창을 표시, 전송 액션을 실행하는 onSend 함수를 넘겨준다 */}
-        <ChatInput onSendMessage={onSendMessage} />
+        <div className="mt-4 sm:mt-8 bottom-[56px] left-0 w-full">
+          {/* 채팅 입력창을 표시, 전송 액션을 실행하는 onSend 함수를 넘겨준다 */}
+          <ChatInput onSendMessage={onSendMessage} />
+        </div>
       </div>
     </>
   );

@@ -2,6 +2,23 @@ import { Chat } from "@/components/Chat";
 import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 
+// firebase 관련 모듈을 불러옵니다.
+import { auth, db } from "@/firebase";
+import {
+  collection,
+  query,
+  doc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  orderBy,
+  where,
+} from "firebase/firestore";
+
+// DB의 todos 컬렉션 참조를 만듭니다. 컬렉션 사용시 잘못된 컬렉션 이름 사용을 방지합니다.
+const chatCollection = collection(db, "chats");
+
 export default function Home() {
   /*
     메시지 목록을 저장하는 상태로, 메시지의 형태는 다음과 같음
@@ -66,12 +83,53 @@ export default function Home() {
       return;
     }
 
-    // console.log(result);
+    console.log(result);
 
     // 로딩 상태를 해제하고, 메시지 목록에 응답을 추가
     setLoading(false);
     setMessages((messages) => [...messages, result]);
+
+    // Firestore에 저장할 데이터 객체 생성
+    {
+      /* const data = {
+      role: message.role,
+      content: message.content,
+      timestamp: serverTimestamp(),
+    };
+
+    try {
+      // Firestore에 데이터 추가
+      await addDoc(chatCollection, data);
+    } catch (error) {
+      console.error("Firestore 저장 오류:", error);
+    }
+    */
+    }
   };
+
+  // console.log(messages);
+
+  // 쿼리를 통해 Firestore에서 채팅 목록을 가져와 보여주는 코드. 그러나 에러로 인해 보류.
+  /* const getMessages = async () => {
+    const q = query(chatCollection, orderBy("time", "asc"));
+
+    // Firestore에서 채팅 목록을 조회합니다.
+    const results = await getDocs(q);
+    const newMessages = [];
+
+    // 가져온 채팅 목록을 newTodos 배열에 담습니다.
+    results.docs.forEach((doc) => {
+      console.log(doc.data());
+      newMessages.push(doc.data());
+    });
+
+    setMessages(newMessages);
+  };
+  // 컴포넌트가 처음 렌더링 될 때 메시지 목록을 초기화
+  useEffect(() => {
+    getMessages();
+  }, []);
+  */
 
   // 메시지 목록을 초기화하는 함수
   // 처음 시작할 메시지를 설정
@@ -79,25 +137,50 @@ export default function Home() {
     setMessages([
       {
         role: "assistant",
-        content: "안녕? 나는 엘리엇이야. 오늘은 무슨 일이 있었니?",
+        content: "왔냐?",
       },
     ]);
+  };
+
+  // Firebase에 마지막 message 저장
+  const addFirebase = async (messages) => {
+    await addDoc(chatCollection, {
+      time: Date.now(),
+      ...messages[messages.length - 1],
+    });
   };
 
   // 메시지 목록이 업데이트 될 때마다 맨 아래로 스크롤
   useEffect(() => {
     scrollToBottom();
+    // console.log(messages[messages.length - 1]);
+    if (messages[messages.length - 1]) {
+      addFirebase(messages);
+      // orderQuery();
+      // console.log(Date.now());
+    }
   }, [messages]);
 
-  // 컴포넌트가 처음 렌더링 될 때 메시지 목록을 초기화
   useEffect(() => {
     handleReset();
   }, []);
 
+  // const initialMount = useRef(true);
+  // useEffect(() => {
+  //   if (initialMount.current) {
+  //     initialMount.current = false;
+  //   } else {
+  //     scrollToBottom();
+  //     if (messages[messages.length - 1]) {
+  //       addFirebase(messages);
+  //     }
+  //   }
+  // }, [messages]);
+
   return (
     <>
       <Head>
-        <title>My Chatbot</title>
+        <title>까칠한 챗봇</title>
         <meta name="description" content="My Chatbot" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -110,31 +193,32 @@ export default function Home() {
               className="ml-2 hover:opacity-50"
               href="https://code-scaffold.vercel.app"
             >
-              My Chatbot
+              까칠한 챗봇
             </a>
           </div>
-          <div className="flex-1 overflow-auto sm:px-10 pb-4 sm:pb-10">
-            <div className="max-w-[800px] mx-auto mt-4 sm:mt-12">
-              {/*
+        </div>
+        <div className="flex-1 overflow-auto sm:px-10 pb-4 sm:pb-10">
+          <div className="max-w-[800px] mx-auto mt-4 sm:mt-12">
+            {/*
                 메인 채팅 컴포넌트
                 messages: 메시지 목록
                 loading: 메시지 전송 중인지 여부
                 onSendMessage: 메시지 전송 함수
               */}
-              <Chat
-                messages={messages}
-                loading={loading}
-                onSendMessage={handleSend}
-              />
-            </div>
-            {/* 메시지 목록의 끝으로 스크롤하기 위해 참조하는 엘리먼트 */}
-            <div ref={messagesEndRef} />
+            <Chat
+              messages={messages}
+              loading={loading}
+              onSendMessage={handleSend}
+            />
           </div>
+          {/* 메시지 목록의 끝으로 스크롤하기 위해 참조하는 엘리먼트 */}
+          <div ref={messagesEndRef} />
         </div>
-        {/* <div
+
+        <div
           className="flex h-[30px] sm:h-[50px] border-t border-neutral-300 
           py-2 px-8 items-center sm:justify-between justify-center"
-        ></div> */}
+        ></div>
       </div>
     </>
   );
